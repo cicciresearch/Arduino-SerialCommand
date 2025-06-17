@@ -32,44 +32,74 @@
   #include <WProgram.h>
 #endif
 #include <string.h>
+#include <Stream.h>
 
 // Size of the input buffer in bytes (maximum length of one command plus arguments)
-#define SERIALCOMMAND_BUFFER 32
-// Maximum length of a command excluding the terminating null
-#define SERIALCOMMAND_MAXCOMMANDLENGTH 8
+#define SERIALCOMMAND_BUFFER 256
+
+#define SERIALCOMMAND_MAXCOMMANDS_DEFAULT 10
 
 // Uncomment the next line to run the library in debug mode (verbose messages)
-//#define SERIALCOMMAND_DEBUG
+// #define SERIALCOMMAND_DEBUG
 
+#ifndef DEBUG_PORT
+    #define DEBUG_PORT Serial
+#endif
 
-class SerialCommand {
+/******************************************************************************/
+// SerialCommand (extends Print)
+// so that callbacks print 
+class SerialCommand : public Print {
   public:
-    SerialCommand();      // Constructor
-    void addCommand(const char *command, void(*function)());  // Add a command to the processing dictionary.
-    void setDefaultHandler(void (*function)(const char *));   // A handler to call when no valid command received.
+    //structure to hold Command Info and callback function
+    struct CommandInfo{
+      const char *name;
+      void (*function)(SerialCommand);
+    };                                     
+    
+    SerialCommand(Stream &port,
+                  const char* deviceType,
+                  int writeEnablePin,
+                  int maxCommands = SERIALCOMMAND_MAXCOMMANDS_DEFAULT
+                 );       // Constructor
+    void addCommand(const char *command, void(*function)(SerialCommand));           // Add a command to the processing dictionary.
+    void addCommand(__FlashStringHelper *command, void(*function)(SerialCommand));  // Add a command to the processing dictionary.
+    void setDefaultHandler(void (*function)(SerialCommand));                        // A handler to call when no valid command received.
 
-    void readSerial();    // Main entry point.
+    int  readSerial();     // Fills the buffer with a command and returns it's length
+    void processCommand(); // Performs command lookup, excution, and clears buffer
+    void matchCommand();   // parses buffer and looks up first token as command
+    void lookupCommandByName(char *name);  // attempts command lookup and sets _current_command
+    void runCommand();    // executes the callback associate with _current_command
+    void setBuffer(char *text_line); 
     void clearBuffer();   // Clears the input buffer.
     char *next();         // Returns pointer to next token found in command buffer (for getting arguments to commands).
+    //provide method for printing
+    size_t write(uint8_t val);
+    void sendData(const char* message, char writeDelimiter = '\r');
+    
+    //accessors
+    CommandInfo getCurrentCommand() {return _current_command;}
 
   private:
+    //Stream object for data IO
+    Stream &_port;
     // Command/handler dictionary
-    struct SerialCommandCallback {
-      char command[SERIALCOMMAND_MAXCOMMANDLENGTH + 1];
-      void (*function)();
-    };                                    // Data structure to hold Command/Handler function key-value pairs
-    SerialCommandCallback *commandList;   // Actual definition for command/handler array
-    byte commandCount;
+    CommandInfo *_commandList;   // Actual definition for command/handler array
+    CommandInfo _current_command; //command ready to dispatch
+    CommandInfo _default_command; //called when a command name is not recognized
+    int  _commandCount;
+    int  _maxCommands;
 
-    // Pointer to the default handler function
-    void (*defaultHandler)(const char *);
+    const char *_device_type; // Device type for command filtering
+    int _writeEnablePin;
 
-    char delim[2]; // null-terminated list of character to be used as delimeters for tokenizing (default " ")
-    char term;     // Character that signals end of command (default '\n')
+    char _delim[2]; // null-terminated list of character to be used as delimeters for tokenizing (default " ")
+    char _term;     // Character that signals end of command (default '\n')
 
-    char buffer[SERIALCOMMAND_BUFFER + 1]; // Buffer of stored characters while waiting for terminator character
-    byte bufPos;                        // Current position in the buffer
-    char *last;                         // State variable used by strtok_r during processing
+    char _buffer[SERIALCOMMAND_BUFFER + 1]; // Buffer of stored characters while waiting for terminator character
+    int  _bufPos;                        // Current position in the buffer
+    char *_last;                         // State variable used by strtok_r during processing
 };
 
 #endif //SerialCommand_h
