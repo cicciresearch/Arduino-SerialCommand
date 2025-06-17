@@ -54,17 +54,18 @@ class SerialCommand : public Print {
     //structure to hold Command Info and callback function
     struct CommandInfo{
       const char *name;
-      void (*function)(SerialCommand);
+      void (*function)(SerialCommand&);
     };                                     
     
     SerialCommand(Stream &port,
                   const char* deviceType,
                   int writeEnablePin,
+                  bool checkAddressMatch = false,
                   int maxCommands = SERIALCOMMAND_MAXCOMMANDS_DEFAULT
                  );       // Constructor
-    void addCommand(const char *command, void(*function)(SerialCommand));           // Add a command to the processing dictionary.
-    void addCommand(__FlashStringHelper *command, void(*function)(SerialCommand));  // Add a command to the processing dictionary.
-    void setDefaultHandler(void (*function)(SerialCommand));                        // A handler to call when no valid command received.
+    void addCommand(const char *command, void(*function)(SerialCommand&));           // Add a command to the processing dictionary.
+    void addCommand(__FlashStringHelper *command, void(*function)(SerialCommand&));  // Add a command to the processing dictionary.
+    void setDefaultHandler(void (*function)(SerialCommand&));                        // A handler to call when no valid command received.
 
     int  readSerial();     // Fills the buffer with a command and returns it's length
     void processCommand(); // Performs command lookup, excution, and clears buffer
@@ -77,6 +78,7 @@ class SerialCommand : public Print {
     //provide method for printing
     size_t write(uint8_t val);
     void sendData(const char* message, char writeDelimiter = '\r');
+    void setDeviceAddress(int address);
     
     //accessors
     CommandInfo getCurrentCommand() {return _current_command;}
@@ -92,6 +94,9 @@ class SerialCommand : public Print {
     int  _maxCommands;
 
     const char *_device_type; // Device type for command filtering
+    int _device_address = -1; // Device address for command filtering, -1 means no filtering
+    bool _checkAddressMatch = false; // Flag to indicate if address matching is enabled            
+
     int _writeEnablePin;
 
     char _delim[2]; // null-terminated list of character to be used as delimeters for tokenizing (default " ")
