@@ -58,11 +58,12 @@ class SerialCommand : public Print {
     };                                     
     
     SerialCommand(Stream &port,
-                  const char* deviceType,
-                  int writeEnablePin,
-                  bool checkAddressMatch = false,
-                  int maxCommands = SERIALCOMMAND_MAXCOMMANDS_DEFAULT
-                 );       // Constructor
+                  int maxCommands = SERIALCOMMAND_MAXCOMMANDS_DEFAULT,
+                  int writeEnablePin = -1,
+                  const char* deviceType = nullptr,
+                  bool checkAddressMatch = false
+                 );
+
     void addCommand(const char *command, void(*function)(SerialCommand&));           // Add a command to the processing dictionary.
     void addCommand(__FlashStringHelper *command, void(*function)(SerialCommand&));  // Add a command to the processing dictionary.
     void setDefaultHandler(void (*function)(SerialCommand&));                        // A handler to call when no valid command received.

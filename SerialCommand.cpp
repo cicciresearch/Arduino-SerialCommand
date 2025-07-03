@@ -4,10 +4,11 @@
  * Constructor makes sure some things are set.
  */
 SerialCommand::SerialCommand(Stream& port,           //
-                             const char* deviceType, //
-                             int writeEnablePin,     //
-                             bool checkAddressMatch, //
-                             int maxCommands)
+                             int maxCommands,        //
+                             int writeEnablePin,     // Set this if backplane is used
+                             const char* deviceType, // Device type for command filtering
+                             bool checkAddressMatch  // Flag to indicate if address matching is enabled
+                             )
     : _port(port),        // reference must be initialized right away
       _commandList(NULL), //
       _commandCount(0),   //
@@ -160,18 +161,22 @@ void SerialCommand::matchCommand() {
  */
 void SerialCommand::processCommand() {
   // matchCommand();
-  char* name = strtok_r(_buffer, _delim, &_last);    // Search for command_name at start of buffer
-  // Serial.println(name);
+  char* name = strtok_r(_buffer, _delim, &_last); // Search for command_name at start of buffer
 
-  char* identifier = strtok_r(NULL, _delim, &_last); // second token (identifier) for device type
-  bool typeMatch = (_device_type && strcmp(identifier, _device_type) == 0);
+  bool typeMatch;
+  if (_device_type) {
+    char* identifier = strtok_r(NULL, _delim, &_last); // second token (identifier) for device type
+    bool typeMatch = (_device_type && strcmp(identifier, _device_type) == 0);
 
-  Serial.print("Comparing [");
-  Serial.print(identifier);
-  Serial.print("] to [");
-  Serial.print(_device_type);
-  Serial.print("] -> ");
-  Serial.println(typeMatch);
+    Serial.print("Comparing [");
+    Serial.print(identifier);
+    Serial.print("] to [");
+    Serial.print(_device_type);
+    Serial.print("] -> ");
+    Serial.println(typeMatch);
+  } else {
+    typeMatch = true; // No device type filtering, so always match
+  }
 
   bool addressMatch;
   if (_checkAddressMatch) {
