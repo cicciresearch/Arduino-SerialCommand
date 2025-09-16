@@ -166,7 +166,7 @@ void SerialCommand::processCommand() {
   bool typeMatch;
   if (_device_type) {
     char* identifier = strtok_r(NULL, _delim, &_last); // second token (identifier) for device type
-    bool typeMatch = (_device_type && strcmp(identifier, _device_type) == 0);
+    typeMatch = (_device_type && strcmp(identifier, _device_type) == 0);
 
     Serial.print("Comparing [");
     Serial.print(identifier);
@@ -268,5 +268,7 @@ void SerialCommand::sendData(const char* message, char writeDelimiter) {
   delayMicroseconds(500);
   digitalWrite(_writeEnablePin, LOW);
 
-  Serial.println(message);
+  if(&_port != &Serial){ //only write to USB serial if not already writing to it
+    Serial.println(message);
+  }
 }
