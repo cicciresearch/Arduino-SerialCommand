@@ -167,13 +167,14 @@ void SerialCommand::processCommand() {
   if (_device_type) {
     char* identifier = strtok_r(NULL, _delim, &_last); // second token (identifier) for device type
     typeMatch = (_device_type && strcmp(identifier, _device_type) == 0);
-
-    Serial.print("Comparing [");
-    Serial.print(identifier);
-    Serial.print("] to [");
-    Serial.print(_device_type);
-    Serial.print("] -> ");
-    Serial.println(typeMatch);
+    #ifdef SERIALCOMMAND_DEBUG
+      Serial.print("Comparing [");
+      Serial.print(identifier);
+      Serial.print("] to [");
+      Serial.print(_device_type);
+      Serial.print("] -> ");
+      Serial.println(typeMatch ? "Device type Matched" : "Wrong Device type");
+    #endif
   } else {
     typeMatch = true; // No device type filtering, so always match
   }
@@ -189,12 +190,14 @@ void SerialCommand::processCommand() {
     } else if (addressStr) {
       addressMatch = (receivedAddress == _device_address);
     }
-    Serial.print("Comparing [");
-    Serial.print(receivedAddress);
-    Serial.print("] to [");
-    Serial.print(_device_address);
-    Serial.print("] -> ");
-    Serial.println(addressMatch);
+    #ifdef SERIALCOMMAND_DEBUG
+      Serial.print("Comparing [");
+      Serial.print(receivedAddress);
+      Serial.print("] to [");
+      Serial.print(_device_address);
+      Serial.print("] -> ");
+      Serial.println(addressMatch ? "Address Matched" : "Wrong Address");
+    #endif
   } else {
     addressMatch = true;
   }
