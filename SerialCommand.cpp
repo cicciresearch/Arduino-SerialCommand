@@ -271,7 +271,7 @@ void SerialCommand::sendData(const char* message, char writeDelimiter) {
   delayMicroseconds(500);
   digitalWrite(_writeEnablePin, LOW);
 
-  if(&_port != &Serial){ //only write to USB serial if not already writing to it
-    Serial.println(message);
-  }
+  // if(&_port != &Serial){ //only write to USB serial if not already writing to it
+  //   Serial.println(message);
+  // }
 }
